@@ -1,0 +1,3 @@
+#!/bin/bash
+
+./sa_jsp ../../instances_JSP/abz5_1010.jsp

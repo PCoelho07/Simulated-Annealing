@@ -1,0 +1,129 @@
+#include "Dgraph.hpp"
+
+
+Dgraph::Dgraph(){
+	this->jobs = 0;
+	this->mach = 0;
+}
+
+void Dgraph::readFile(const char *file){
+	cout << "Iniciando leitura...\n";
+	string linha;
+	unsigned aux;
+	vector<int> vetor;
+	ifstream f(file);	
+	
+	// /*Número de trabalhos*/	
+	f >> aux; 
+	this->jobs = aux;
+
+	// /*Número de máquinas*/
+	f >> aux;
+	this->mach = aux;
+
+	while(true){
+		double value;
+		if(!(f >> value))
+			break;
+		vetor.push_back(value);
+	}
+
+	this->dados = new int*[vetor.size()];
+	for(int i =0; i < vetor.size(); i++){
+		this->dados[i] = new int[vetor.size()];
+	}
+
+	int cont = 0;
+	for(int i =0; i < this->jobs; i++){
+		for(int j =0; j < this->mach*2; j++){
+			this->dados[i][j] = vetor.at(cont);
+			cont++;			
+		}
+	}
+	// /*
+	// 	Exibição(this->dados)
+	// */
+	// for(int i =0; i < this->jobs; i++){
+	// 	for(int j =0; j < this->mach*2; j++){
+	// 		cout << dados[i][j] << " ";
+	// 	}
+	// 	cout << endl;
+	// }
+
+	if(vetor.size() != this->jobs*(this->mach*2))
+		cout << "Erro durante leitura!!\n";
+	
+	cout << "\nJobs: " << this->jobs << " Machines: " << this->mach;
+	cout << "\nMatrix size: " << this->jobs*(this->mach*2) << "\n";
+
+	cout << "\n\n";
+
+	cout << "Leitura concluída!\n";
+
+	// this->mountDG(); // Constrói o grafo
+}
+
+
+void Dgraph::mountDG(){	
+	Task *t;	
+	/*
+		Vértices do grafo
+	*/
+	int index = 0;
+	for(int i = 0; i < this->jobs; i++){
+		for(int j = 0; j <  this->mach*2; j+=2){
+			t = new Task(index, i, this->dados[i][j], this->dados[i][j+1]);
+			this->task_list.push_back(t);
+			index++;
+		}
+	}
+
+	/*
+		Monta o grafo sem arestas disjuntivas, ou seja, obedecendo apenas a precedência de operações
+	*/
+	this->adj = new vector<Task*>[this->task_list.size()];
+
+
+
+	for(int i=0; i < this->task_list.size()-1; i++){
+		if(this->task_list.at(i)->job_id == this->task_list.at(i+1)->job_id){
+			//this->adj[i].push_back(this->task_list.at(i+1));
+			this->addEdge(this->task_list.at(i), this->task_list.at(i+1));
+		}
+		else{
+			t = new Task(100, -1, -1, -1);
+			//this->adj[i].push_back(*t);
+			this->addEdge(this->task_list.at(i), t);
+		}
+	}
+	t = new Task(100, -1, -1, -1);
+	//this->adj[this->task_list.size()-1].push_back(*t); 
+	this->addEdge(this->task_list.at(this->task_list.size()-1), t); //último elemento apontando para o 'sink'
+
+//	Exibição
+	for(int i = 0; i < this->task_list.size(); i++){
+		cout << "Vertex: " << this->task_list.at(i)->id_task << " - ";
+		for(int j =0; j < this->adj[this->task_list.at(i)->id_task].size(); j++){
+			cout << "Adjacents: " << this->adj[i].at(j)->id_task << "\n";
+		}
+	}
+}
+
+
+/*
+	Adiciona v2 à lista de vértices adjacentes de v1;
+*/
+bool Dgraph::addEdge(Task *v1, Task *v2){
+	if(this->adj != NULL){
+		this->adj[v1->id_task].push_back(v2);
+		return true;
+	}
+	return false;
+}
+
+/*
+	Remove a aresta entre v1 e v2
+*/
+void Dgraph::delEdge(Task v1, Task v2){
+	// Falta implementar
+}
