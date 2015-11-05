@@ -132,21 +132,81 @@ void SimulatedAnnealing::lerArq(const char *nomeArq){
 	fclose(f);
 }
 
+/*
+	Algoritmo de Khan
+*/
+vector<Task*> ordTop(Dgraph *d_graph){
+	vector<Task*> vertex = d_graph->getTaskList();
+	vector<Task*> *graph = d_graph->getGraph();
+	vector<Task*> s; // Lista de vertices sem precedência.
+	vector<Task*> l; // Lista ordenada topologicamente.
 
+	s.push_back(vertex.at(0));
+	vector<Task*>::iterator it = l.begin();
+
+	while(s.size() != 0){
+		l.push_back(*(s.begin())); //Adiciono a l o primeiro vértice de s
+		s.erase(s.begin()); //Removo o primeiro elemento de S
+		
+		for(int i =0; i < graph[(*it)->id_task].size(); i++) //Para cada vertice adjacente ao primeiro da lista 'l', adiciona a lista 's';
+			s.push_back(graph[(*it)->id_task].at(i));
+	}
+
+	if(l.size() != vertex.size()){
+		cout << "\nOcorreu um ERRO!\n"; // O grafo possui um ciclo
+		exit(EXIT_FAILURE);
+	}
+
+	return l;
+}
 
 
 /*
-	Dado um grafo disjuntivo, calcula seu makespan
+	Dado um grafo disjuntivo, calcula o makespan e seu custo
 */
-float SimulatedAnnealing::calculaCusto(Dgraph*){
-	float custoFinal = 0;
+ int SimulatedAnnealing::calculaCusto(Dgraph *d_graph){
+	vector<Task*> ord = ordTop(d_graph); //Ordenação topológica;
+	vector<Task*> *graph = d_graph->getGraph();
+	int *dists = new int[d_graph->getTaskList().size()];
+	stack<Task*> nodes_cp; // Pilha de elementos do caminho crítico
+
+	dists[d_graph->getTaskList().at(0)->id_task] = 0;
+	for(int i=1; i < d_graph->getTaskList().size(); i++){
+		dists[d_graph->getTaskList().at(i)->id_task] = INFNEG;
+	}
+
+	vector<Task*>::iterator v; 
+	for(v = ord.begin(); v != ord.end(); v++){
+		for(int i= 0; i<graph[(*v)->id_task].size(); i++){
+			if(dists[graph[(*v)->id_task].at(i)->id_task] < (dists[(*v)->id_task] + graph[(*v)->id_task].at(i)->duration)){
+				dists[graph[(*v)->id_task].at(i)->id_task] = dists[(*v)->id_task] + graph[(*v)->id_task].at(i)->duration;
+				graph[(*v)->id_task].at(i)->pai = (*v); 
+			}
+		}
+	}
+
+	vector<Task*>::iterator t = d_graph->getTaskList().end();
+	t--;
+	nodes_cp.push((*t));
+	while(*t != 0){
+		if((*t)->pai){
+			nodes_cp.push((*t)->pai);
+			(*t) = (*t)->pai;
+		}
+		else
+			(*t) = 0;
+	}
+
+	return dists[101]; //Id do 't'(target)
 	
-	
-	return custoFinal;
+	/*
+		Pela propriedade de relaxamento de caminho(Lema 24.15 - Livro Cormen), se existir um caminho do 's'(source) e 't'(target),
+		dists[t] = minpath(s, t), nesse caso, dists[t] = maxpath(s, t).
+	*/
 }
 
 /*
-	Regra SPT
+	Regra shortest path time
 */
 void SimulatedAnnealing::solucaoInicial(Dgraph *d_graph){
 	int qtdMach = d_graph->getMach();

@@ -29,6 +29,7 @@ class Dgraph{
 		void mountDG(); // Monta o grafo com os arcos direcionados entre operações que possuem precedência direta.	
 		vector<Task*> *getGraph(){ return this->adj; };
 		vector<Task*> getTaskList(){ return this->task_list; };
+		void setTaskList(vector<Task*>);
 		bool addEdge(Task *v1, Task *v2); // Adiciona arestas no grafo
 		void delEdge(Task v1, Task v2); //Remove uma aresta no grafo
 		int getJobs(){return this->jobs;};

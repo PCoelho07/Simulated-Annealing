@@ -69,44 +69,59 @@ void Dgraph::mountDG(){
 	/*
 		Vértices do grafo
 	*/
-	int index = 0;
+	t = new Task(0, -1, -1, -1); //Source
+	this->task_list.push_back(t);
+
+	int index = 1;
 	for(int i = 0; i < this->jobs; i++){
 		for(int j = 0; j <  this->mach*2; j+=2){
+			// cout << index<< endl;
 			t = new Task(index, i, this->dados[i][j], this->dados[i][j+1]);
 			this->task_list.push_back(t);
 			index++;
 		}
 	}
+	// delete [] t;
+	t = new Task(101, -1, -1, -1);
+	this->task_list.push_back(t); //Target
+
+	cout << this->task_list.size() << endl; 
+
+	// for(int i =0; i < this->task_list.size(); i++){
+	// 	cout << this->task_list.at(i)->id_task << endl;
+	// }
 
 	/*
 		Monta o grafo sem arestas disjuntivas, ou seja, obedecendo apenas a precedência de operações
 	*/
 	this->adj = new vector<Task*>[this->task_list.size()];
 
+	for(int i=0; i<this->jobs; i++){
+		this->addEdge(this->task_list.at(0), this->task_list.at((i*this->mach)+1));
+	}
 
 
-	for(int i=0; i < this->task_list.size()-1; i++){
+	for(int i=1; i < this->task_list.size()-1; i++){
 		if(this->task_list.at(i)->job_id == this->task_list.at(i+1)->job_id){
 			//this->adj[i].push_back(this->task_list.at(i+1));
 			this->addEdge(this->task_list.at(i), this->task_list.at(i+1));
 		}
 		else{
-			t = new Task(100, -1, -1, -1);
-			//this->adj[i].push_back(*t);
-			this->addEdge(this->task_list.at(i), t);
+			this->addEdge(this->task_list.at(i), this->task_list.at(this->task_list.size()-1));
 		}
 	}
-	t = new Task(100, -1, -1, -1);
+	// t = new Task(100, -1, -1, -1);
 	//this->adj[this->task_list.size()-1].push_back(*t); 
-	this->addEdge(this->task_list.at(this->task_list.size()-1), t); //último elemento apontando para o 'sink'
+	// this->addEdge(this->task_list.at(this->task_list.size()-2), this->task_list.at(this->task_list.size()-1)); //último elemento apontando para o 'Target'
 
-//	Exibição
+	// Exibição
 	for(int i = 0; i < this->task_list.size(); i++){
 		cout << "Vertex: " << this->task_list.at(i)->id_task << " - ";
 		for(int j =0; j < this->adj[this->task_list.at(i)->id_task].size(); j++){
 			cout << "Adjacents: " << this->adj[i].at(j)->id_task << "\n";
 		}
 	}
+	delete [] t;
 }
 
 
@@ -126,4 +141,8 @@ bool Dgraph::addEdge(Task *v1, Task *v2){
 */
 void Dgraph::delEdge(Task v1, Task v2){
 	// Falta implementar
+}
+
+void Dgraph::setTaskList(vector<Task*> taskList){
+	this->task_list = taskList;
 }

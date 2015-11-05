@@ -1,6 +1,8 @@
 #ifndef __SIMULATED_ANNEALING_HPP
 #define __SIMULATED_ANNEALING_HPP
 #endif
+#define INFNEG -1.0
+
 
 #include <fstream>
 #include <cstring>
@@ -9,10 +11,17 @@
 #include <ctime>
 #include <cmath>
 #include <algorithm>
-#include <iostream>
+#include <stack>
+// #include <iostream>
 #include "Dgraph.hpp"
 
 using namespace std;
+
+struct Arv
+{
+	Task *pai;
+};
+
 
 class SimulatedAnnealing{
 	private:
@@ -31,6 +40,6 @@ class SimulatedAnnealing{
 	public:
 		void solucaoInicial(Dgraph*);
 		void solucaoVizinha(int*, int*);
-		float calculaCusto(Dgraph*);	
+		int calculaCusto(Dgraph*);	
 		void mostraSolucao();
 };
