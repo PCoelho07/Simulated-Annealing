@@ -239,31 +239,90 @@ void SimulatedAnnealing::solucaoInicial(Dgraph *d_graph){
 		}
 	}
 }
+
+/*
+	
+Verifica se todas as operações entre i e j no caminho crítico, são da mesma máquina (Def de par crítico)
+	Supondo que i e j são da mesma máquina
+
+*/
+
+bool checkMachine(vector<Task*> v, int i, int j, int idMachine){
+	vector<Task*>::iterator x = find(v.begin(), v.end(), v.at(i));
+	vector<Task*>::iterator y = find(v.begin(), v.end(), v.at(j));
+	vector<Task*>::iterator it;
+
+	for(it = x; it != y; it++){
+		if((*it)->machine_id != idMachine)
+			return false;
+	}
+	return true;
+}
+
 /*
 	Gera uma solução vizinha à que foi passada na função.
 */
-void SimulatedAnnealing::solucaoVizinha(makespan R){
+void SimulatedAnnealing::solucaoVizinha(Dgraph *d_graph, makespan R){
+	vector<Task*> taskList = d_graph->getTaskList();
 	int custo = R.custo;
 	stack<Task*> nodo = R.nodos;
 	vector<Task*> v;
-	
+	int id_mach;
+
 	while(!nodo.empty()){
 		v.push_back(nodo.top());
 		nodo.pop();
 	}
 
-	int x, y;
+	int x, y, aux;
 	bool flag = false;
-
+	vector<Task*>::iterator it;
 	while(flag){
+		// Sorteia 2 tarefas 
 		x = rand() % v.size();
 		y = rand() % v.size();
 		
-		while(x >= y)
+		while(x == y)
 			y = rand() % v.size();
 
+		if(x > y){
+			maior = x;
+			x = y;
+			y = maior;
+		}
+
+		if(v.at(x) && v.at(y)){ //Checa se estão no caminho crítico
+			if(v.at(x)->machine_id == v.at(y)->machine_id){ //Checa se são executadas na mesma máquina				
+				if(checkMachine(v, x, y, v.at(x)->machine_id)){ //Checa se todas as operaçoes entre x e y são executadas na mesma máquina;
+					//Case 1
+					it = find(t.begin(), t.end(); v.at(y));
+					if(find(v.begin(), v.end(), ++it)){
+						if(){
+							/*
+								Aqui é que tá o rolé!
+							*/
+						}
+					}
+					//Case 2
+					it = find(t.begin(), t.end(), v.at(x));
+					if(find(v.begin(), v.end(), --it)){
+						it = find(t.begin(), t.end(), v.at(y));
+						it--;
+						if((R.dists[v.at(x)->id_task] + v.at(x)->duration) >= (R.dists[(*it)->id_task] + (*it)->duration)){
+							
+						}
+					}
+
+
+				}
+			}
+		}
+
+
+
+
 		/*
-			Checa se as Task's estão na pilha;
+			Checa se as Task's estão no vetor;
 			Checa se são da mesma máquina;
 			Checa se todas as Task's entre x e y são da mesma máquina;
 
@@ -284,24 +343,6 @@ void SimulatedAnnealing::solucaoVizinha(makespan R){
 
 }
 
-/*
-	
-Verifica se todas as operações entre i e j no caminho crítico, são da mesma máquina (Def de par crítico)
-
-*/
-
-bool checkMachine(vector<Task*> v, int i, int j){
-
-	// vector<Task*>::iterator it = v.at(i);
-
-	// for(;it != v.at(j); it++){
-	// 	if((*it)->id_task){
-
-	// 	}
-	// }
-
-	return true;
-}
 
 
 
