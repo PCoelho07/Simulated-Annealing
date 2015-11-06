@@ -17,9 +17,10 @@
 
 using namespace std;
 
-struct Arv
-{
-	Task *pai;
+struct makespan{
+	int custo; // Custo do caminho crítico
+	stack<Task*> nodos; // Nodos que compõe o caminho crítico
+	int *dists; //vetor que contém a distância do maior caminho da fonte para todos os nós;
 };
 
 
@@ -29,6 +30,7 @@ class SimulatedAnnealing{
 		int *melhor; //grafo de melhor caminho
 		int custoMelhor; // Custo do melhor caminho
 		int tamanho; // tamanho do grafo
+		vector<Task> *m;
 
 	public:
 		// --t0 1000 --nit 20 --txalpha 0.99 
@@ -39,7 +41,7 @@ class SimulatedAnnealing{
 		void lerArq(const char*);
 	public:
 		void solucaoInicial(Dgraph*);
-		void solucaoVizinha(int*, int*);
-		int calculaCusto(Dgraph*);	
+		void solucaoVizinha(makespan);
+		makespan calculaCusto(Dgraph*);	
 		void mostraSolucao();
 };

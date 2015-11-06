@@ -1,6 +1,8 @@
 #include "sa.hpp"
 
 SimulatedAnnealing::SimulatedAnnealing(const char* strT0, double t0, const char* strNmax, int nmax, const char* txredux, float talpha){
+	
+
 	// this->melhor = NULL;
 	// int *corrente = new int[this->tamanho]; //Solução corrente
 	// int *vizinho = new int[this->tamanho]; //Solução vizinha
@@ -164,7 +166,7 @@ vector<Task*> ordTop(Dgraph *d_graph){
 /*
 	Dado um grafo disjuntivo, calcula o makespan e seu custo
 */
- int SimulatedAnnealing::calculaCusto(Dgraph *d_graph){
+ makespan SimulatedAnnealing::calculaCusto(Dgraph *d_graph){
 	vector<Task*> ord = ordTop(d_graph); //Ordenação topológica;
 	vector<Task*> *graph = d_graph->getGraph();
 	int *dists = new int[d_graph->getTaskList().size()];
@@ -196,8 +198,12 @@ vector<Task*> ordTop(Dgraph *d_graph){
 		else
 			(*t) = 0;
 	}
+	makespan R;
+	R.custo = dists[101];
+	R.nodos = nodes_cp;
+	R.dists = dists;
 
-	return dists[101]; //Id do 't'(target)
+	return R; //Estrutura que contém o custo e os nodos do caminho crítico;
 	
 	/*
 		Pela propriedade de relaxamento de caminho(Lema 24.15 - Livro Cormen), se existir um caminho do 's'(source) e 't'(target),
@@ -211,48 +217,91 @@ vector<Task*> ordTop(Dgraph *d_graph){
 void SimulatedAnnealing::solucaoInicial(Dgraph *d_graph){
 	int qtdMach = d_graph->getMach();
 	vector<Task*> *graph = d_graph->getGraph();
-	vector<Task> *m = new vector<Task>[qtdMach];
+	this->m = new vector<Task>[qtdMach];
 	vector<Task*> *m0 = new vector<Task*>[qtdMach];
 	
 	for(int i =0; i < qtdMach; i++){	
 		for(int j = 0; j < d_graph->getTaskList().size(); j++){
 			if(d_graph->getTaskList().at(j)->machine_id == i)
-				m[i].push_back((*d_graph->getTaskList().at(j)));
+				this->m[i].push_back((*d_graph->getTaskList().at(j)));
 		}
 	}
 
 	//Para cada máquina, executa SPT
 	for(int i = 0; i < qtdMach; i++){
-		sort(m[i].begin(), m[i].end()); // O(N*log n)
+		sort(this->m[i].begin(), this->m[i].end()); // O(N*log n)
 	}
 
 	//Adiciona as arestas no grafo
 	for(int i =0; i < qtdMach; i++){
-		for(int j=0; j < m[i].size()-1; j++){
-			d_graph->addEdge(&m[i][j], &m[i][j+1]);
+		for(int j=0; j < this->m[i].size()-1; j++){
+			d_graph->addEdge(&(this->m[i][j]), &(this->m[i][j+1]));
 		}
 	}
 }
 /*
 	Gera uma solução vizinha à que foi passada na função.
 */
-void SimulatedAnnealing::solucaoVizinha(int *corrente, int* vizinho){
-	// int *vizinho = new int[this->tamanho];
-	memcpy(vizinho, corrente, this->tamanho*sizeof(int));
+void SimulatedAnnealing::solucaoVizinha(makespan R){
+	int custo = R.custo;
+	stack<Task*> nodo = R.nodos;
+	vector<Task*> v;
+	
+	while(!nodo.empty()){
+		v.push_back(nodo.top());
+		nodo.pop();
+	}
 
-	// srand(time(NULL));
-	int x = rand() % this->tamanho;
-	int y = rand() % this->tamanho;
-	int aux = 0;
+	int x, y;
+	bool flag = false;
 
-	while(x == y)
-		y = rand() % this->tamanho;
+	while(flag){
+		x = rand() % v.size();
+		y = rand() % v.size();
+		
+		while(x >= y)
+			y = rand() % v.size();
 
-	aux = vizinho[x];
-	vizinho[x] = vizinho[y];
-	vizinho[y] = aux;
+		/*
+			Checa se as Task's estão na pilha;
+			Checa se são da mesma máquina;
+			Checa se todas as Task's entre x e y são da mesma máquina;
+
+		
+			Caso, as sentenças acima sejam verdadeiras, aí verificamos as sentenças abaixo;
+				
+				case 1:
+					Operação j+1 está no critical path;
+					maxpath(j, last) >= maxpath(i+1, last);
+
+				case 2: 
+					Operaçao i-1 está no critical path;
+					maxPath(begin, i) + i->duration >= maxPath(begin, j-1) + (j-1)->duration;
+		*/
+
+	}
+
+
 }
 
+/*
+	
+Verifica se todas as operações entre i e j no caminho crítico, são da mesma máquina (Def de par crítico)
+
+*/
+
+bool checkMachine(vector<Task*> v, int i, int j){
+
+	// vector<Task*>::iterator it = v.at(i);
+
+	// for(;it != v.at(j); it++){
+	// 	if((*it)->id_task){
+
+	// 	}
+	// }
+
+	return true;
+}
 
 
 
