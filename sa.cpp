@@ -263,7 +263,7 @@ bool checkMachine(vector<Task*> v, int i, int j, int idMachine){
 	Gera uma solução vizinha à que foi passada na função.
 */
 void SimulatedAnnealing::solucaoVizinha(Dgraph *d_graph, makespan R){
-	vector<Task*> taskList = d_graph->getTaskList();
+	vector<Task*> t = d_graph->getTaskList();
 	int custo = R.custo;
 	stack<Task*> nodo = R.nodos;
 	vector<Task*> v;
@@ -286,26 +286,28 @@ void SimulatedAnnealing::solucaoVizinha(Dgraph *d_graph, makespan R){
 			y = rand() % v.size();
 
 		if(x > y){
-			maior = x;
+			aux = x;
 			x = y;
-			y = maior;
+			y = aux;
 		}
 
 		if(v.at(x) && v.at(y)){ //Checa se estão no caminho crítico
 			if(v.at(x)->machine_id == v.at(y)->machine_id){ //Checa se são executadas na mesma máquina				
 				if(checkMachine(v, x, y, v.at(x)->machine_id)){ //Checa se todas as operaçoes entre x e y são executadas na mesma máquina;
 					//Case 1
-					it = find(t.begin(), t.end(); v.at(y));
-					if(find(v.begin(), v.end(), ++it)){
-						if(){
-							/*
-								Aqui é que tá o rolé!
-							*/
-						}
+					it = find(t.begin(), t.end(), v.at(y));
+					it++;
+					if(find(v.begin(), v.end(), (*it)) != v.end()){
+						// if(){
+							
+						// 		Aqui é que tá o rolé!
+							
+						// }
 					}
-					//Case 2
+					// //Case 2
 					it = find(t.begin(), t.end(), v.at(x));
-					if(find(v.begin(), v.end(), --it)){
+					it--;
+					if(find(v.begin(), v.end(), (*it)) != v.end()){
 						it = find(t.begin(), t.end(), v.at(y));
 						it--;
 						if((R.dists[v.at(x)->id_task] + v.at(x)->duration) >= (R.dists[(*it)->id_task] + (*it)->duration)){

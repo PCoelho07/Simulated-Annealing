@@ -41,7 +41,7 @@ class SimulatedAnnealing{
 		void lerArq(const char*);
 	public:
 		void solucaoInicial(Dgraph*);
-		void solucaoVizinha(makespan);
+		void solucaoVizinha(Dgraph*, makespan);
 		makespan calculaCusto(Dgraph*);	
 		void mostraSolucao();
 };
