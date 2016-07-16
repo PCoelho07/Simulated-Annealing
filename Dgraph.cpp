@@ -7,7 +7,7 @@ Dgraph::Dgraph(){
 }
 
 void Dgraph::readFile(const char *file){
-	cout << "Iniciando leitura...\n";
+	cout << "\n \n Iniciando leitura de arquivo ...\n";
 	string linha;
 	unsigned aux;
 	vector<int> vetor;
@@ -27,6 +27,8 @@ void Dgraph::readFile(const char *file){
 			break;
 		vetor.push_back(value);
 	}
+
+	this->tamanho = vetor.size();
 
 	this->dados = new int*[vetor.size()];
 	for(int i =0; i < vetor.size(); i++){
@@ -58,7 +60,7 @@ void Dgraph::readFile(const char *file){
 
 	cout << "\n\n";
 
-	cout << "Leitura concluída!\n";
+	cout << "\n \n Leitura concluída!\n";
 
 	// this->mountDG(); // Constrói o grafo
 }
@@ -117,11 +119,16 @@ void Dgraph::mountDG(){
 	// Exibição
 	for(int i = 0; i < this->task_list.size(); i++){
 		cout << "Vertex: " << this->task_list.at(i)->id_task << " - ";
-		for(int j =0; j < this->adj[this->task_list.at(i)->id_task].size(); j++){
-			cout << "Adjacents: " << this->adj[i].at(j)->id_task << "\n";
+		if(this->adj[this->task_list.at(i)->id_task].size() > 0) {
+			for(int j =0; j < this->adj[this->task_list.at(i)->id_task].size(); j++){
+				cout << "Adjacents: " << this->adj[i].at(j)->id_task << "\n";
+			}			
+		}
+		else {
+			cout << "Não há adjacentes!!!\n";
 		}
 	}
-	delete [] t;
+	// delete t;
 }
 
 
@@ -139,10 +146,20 @@ bool Dgraph::addEdge(Task *v1, Task *v2){
 /*
 	Remove a aresta entre v1 e v2
 */
-void Dgraph::delEdge(Task v1, Task v2){
-	// Falta implementar
+void Dgraph::delEdge(Task *v1, Task *v2){
+	if(this->adj != NULL) {
+		vector<Task*>::iterator it = find(this->adj[v1->id_task].begin(), this->adj[v2->id_task].end(), v2);
+		this->adj[v1->id_task].erase(it);
+	}
 }
 
 void Dgraph::setTaskList(vector<Task*> taskList){
 	this->task_list = taskList;
+}
+
+Dgraph::~Dgraph() {
+	delete [] this->adj;
+
+	for(int i=0; i<this->tamanho; i++)
+		delete []this->dados;
 }

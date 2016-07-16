@@ -1,163 +1,127 @@
 #include "sa.hpp"
 
-SimulatedAnnealing::SimulatedAnnealing(const char* strT0, double t0, const char* strNmax, int nmax, const char* txredux, float talpha){
+SimulatedAnnealing::SimulatedAnnealing(const char* strT0, double t0, const char* strNmax, int nmax,
+									const char* txredux, float talpha, Dgraph *d) { 
+
+	double tf = 0; // Temperatura final
+	double t = t0; // Temṕeratura corrente
+	double txReduc = talpha; // Taxa de redução da temperatura
 	
+	Dgraph *d_graph = d;
+	makespan corrente, vizinho;
 
-	// this->melhor = NULL;
-	// int *corrente = new int[this->tamanho]; //Solução corrente
-	// int *vizinho = new int[this->tamanho]; //Solução vizinha
-	// //int t0; //Temperatura inicial
-	// double tf = 0; // Temperatura final
-	// double t = t0; // Temṕeratura corrente
-	// double txReduc = talpha; // Taxa de redução da temperatura
-	// int custoCorrente =0, custoVizinho =0;
-	// // int nmax = 0;
-	// int diferenca =0;
-
-	// this->melhor = this->solucaoInicial();
-	// memcpy(corrente, this->melhor, sizeof(int)*this->tamanho);
-	// this->custoMelhor = custoCorrente = this->calculaCusto(this->melhor);
-	// double a =0, p =0;
-	// int aux =0;
-
-	// int btmax = 100, melhorInt =0;
-	// srand(time(NULL));
-	// 	while(t > 0.0001){
-	// 		++aux;
-	// 		for(int contador =0; contador < nmax; ++contador){
-	// 			this->solucaoVizinha(corrente, vizinho);
-	// 			custoVizinho = this->calculaCusto(vizinho);
-	// 			diferenca = custoVizinho - custoCorrente;
-	// 			a =double(double(rand())/double(RAND_MAX));
-	// 			p =exp(double(-diferenca/t));
-	// 				if(diferenca < 0 || a < p){
-	// 					memcpy(corrente, vizinho, sizeof(int)*this->tamanho);
-	// 					custoCorrente = custoVizinho;
-	// 					if(custoCorrente < this->custoMelhor){
-	// 						memcpy(this->melhor, corrente, sizeof(int)*this->tamanho);
-	// 						this->custoMelhor = custoCorrente;
-	// 						melhorInt=aux;
-	// 					}
-	// 				}
-	// 		}
-	// 		t = txReduc*t; // reduz a temperatura
-	// 		if(aux % 200 == 0){
-	// 			nmax += 10;
-	// 		}
+	this->solucaoInicial(d_graph);
+	this->melhor = corrente = this->calculaCusto(d, NULL);
 	
-	// 	}
+	// /* Variáveis auxilares */
+	int count = 0;
+	double a = 0, p = 0;
+	int diff = 0;
 
-	// // this->mostraSolucao(); //Mostra solução
-	// cout << this->calculaCusto(this->melhor) << "\n";
-	// delete[] corrente;
-	// delete[] vizinho;
+	// /* --  LOOP Principal  -- */
+	cout << "Entrou no loop principal \n";
+	while(t > 0.0001) {
+		++count;
+		
+		for(int contador = 0; contador < nmax; contador++) {
+			// cout << t << "\n";
+			this->solucaoVizinha(d_graph, corrente);
+			vizinho = this->calculaCusto(d_graph, NULL);
+			diff = vizinho.custo - corrente.custo;
+
+			a =double(double(rand())/double(RAND_MAX));
+			p =exp(double(-diff/t));
+			
+			if(diff < 0 || a < p) {
+				corrente = vizinho;
+				if (corrente.custo < melhor.custo) {
+					this->melhor = corrente;
+					cout << this->melhor.custo << "\n";
+				}
+			}
+		
+		}		
+
+		t = txReduc * t; // Reduz a temperatura
+		if (count % 200 == 0) {
+			nmax += 10;
+		}
+
+
+	}		
+
+	cout << this->melhor.custo << "\n";
 }
 
-SimulatedAnnealing::SimulatedAnnealing(){
 
+void visits(Task *t, list<Task*> &l, vector<Task*> *adj) {
+
+	t->visited = true;
+
+	vector<Task*>::iterator i;
+
+	if(adj[t->id_task].size() > 0) {
+		cout << t->id_task << "\n";
+		cout << "\nPossui adjacentes!\n";
+		for(i = adj[t->id_task].begin(); i != adj[t->id_task].end(); ++i) {
+			cout << "loop for \n";
+			cout << (*i)->visited << "\n";
+			if((*i)->visited == false){
+				visits((*i), l, adj);
+			}
+
+			// cout << aux << "\n";
+			// aux++;
+			
+		}
+	}
+
+	l.push_front(t);
 }
+
+
 
 /*
-	Coleta e estrutura os dados vindo do arquivo.
+	Retorna uma ordenação topológica
 */
-void SimulatedAnnealing::lerArq(const char *nomeArq){
-	char nome[40];
-	char tipo[20]; // TYPE
-	char formato[20]; // EDGE_WEIGHT_TYPE
-	char flag[255];
-
-	FILE *f = fopen(nomeArq, "r");
-
-	if(f == NULL){
-		cout << "\nArquivo nao existe!!\n";
-		int i=0;
-		while(nomeArq[i] != '\0'){
-			cout << nomeArq[i];
-			i++;
-		}
-		exit(0);
-	}
-
-	/* 
-		Captura apenas o cabeçalho do arquivo 
-		Obs.: Adaptado do código do prof. Givanaldo
-	*/
-
-	struct ponto {double x, y; } *p;
-	while (!feof(f)){
-		fscanf(f, "%s", flag);
-		if(strcmp(flag, "NAME:") == 0)
-			fscanf(f, " %s", nome);
-		else if(strcmp(flag, "NAME") == 0)
-			fscanf(f, " : %s", nome);
-		else if (strcmp(flag, "DIMENSION:") == 0)
-			fscanf(f, " %d", &this->tamanho);
-		else if (strcmp(flag, "DIMENSION") == 0)
-			fscanf(f, " : %d", &this->tamanho);
-		else if (strcmp(flag, "EDGE_WEIGHT_TYPE:") == 0)
-			fscanf(f, " %s", formato);
-		else if (strcmp(flag, "EDGE_WEIGHT_TYPE") == 0)
-			fscanf(f, " : %s", formato);
-		else if (strcmp(flag, "TYPE:") == 0)
-			fscanf(f, " %s", tipo);
-		else if (strcmp(flag, "TYPE") == 0)
-			fscanf(f, " : %s", tipo);
-		else if (strcmp(flag, "NODE_COORD_SECTION") == 0)
-			break;
-		else if (strcmp(flag, "EOF") == 0) {
-			printf("ERRO: O campo EDGE_WEIGHT_FORMAT ou NODE_COORD_SECTION nao existe no arquivo %s.\n", nomeArq);
-			exit(0);
-		}
-	}
-
-	p = new ponto[this->tamanho];
-	double tmp;
-	for(int i=0; i<this->tamanho; i++)
-		fscanf(f, "%lf %lf %lf\n", &tmp, &(p[i].x), &(p[i].y));
-
-	this->custo = new float*[this->tamanho];
-	for(int x =0; x < this->tamanho; ++x){
-		this->custo[x] = new float[this->tamanho];
-	}
-
-	/* Alimento a matriz de distancias entre as cidades */
-	for(int i = 0; i < this->tamanho; i++){
-		for(int j = 0; j < this->tamanho; j++){
-			if(i == j)
-				custo[i][j] = 0;
-			else
-				custo[i][j] = (int) nearbyint(sqrt(pow(p[i].x - p[j].x, 2) + pow(p[i].y - p[j].y, 2)));			
-			custo[j][i] = custo[i][j];
-		}
-	}
-	delete[] p;
-	fclose(f);
-}
-
-/*
-	Algoritmo de Khan
-*/
-vector<Task*> ordTop(Dgraph *d_graph){
+list<Task*> ordTop(Dgraph *d_graph, Task *v){
 	vector<Task*> vertex = d_graph->getTaskList();
 	vector<Task*> *graph = d_graph->getGraph();
 	vector<Task*> s; // Lista de vertices sem precedência.
-	vector<Task*> l; // Lista ordenada topologicamente.
+	list<Task*> l; // Lista ordenada topologicamente.
 
-	s.push_back(vertex.at(0));
-	vector<Task*>::iterator it = l.begin();
+	// if(v != NULL){
+	// 	s.push_back(v);
+	// }
+	// else{
+	// 	s.push_back(vertex.at(0));
+	// }
 
-	while(s.size() != 0){
-		l.push_back(*(s.begin())); //Adiciono a l o primeiro vértice de s
-		s.erase(s.begin()); //Removo o primeiro elemento de S
-		
-		for(int i =0; i < graph[(*it)->id_task].size(); i++) //Para cada vertice adjacente ao primeiro da lista 'l', adiciona a lista 's';
-			s.push_back(graph[(*it)->id_task].at(i));
+	// for(int i = 0; i < vertex.size(); i++){
+	// 	cout << "Vertex: " << vertex.at(i)->id_task << " - ";
+	// 	if(graph[vertex.at(i)->id_task].size() > 0) {
+	// 		for(int j =0; j < graph[vertex.at(i)->id_task].size(); j++){
+	// 			cout << "Adjacents: " << graph[vertex.at(i)->id_task].at(j)->id_task << "\n";
+	// 		}			
+	// 	}
+	// 	else {
+	// 		cout << "Não há adjacentes!!!\n";
+	// 	}
+	// }
+	// for(int j =0; j < graph[vertex.at(1)->id_task].size(); j++){
+	// 			cout << "Adjacents: " << graph[vertex.at(1)->id_task].at(j)->id_task << "\n";
+	// }	
+	
+	
+	for(int i = 0; i < vertex.size(); i++) {
+		if(vertex.at(i)->visited  == false)	
+			visits(vertex.at(i), l, graph);
 	}
 
-	if(l.size() != vertex.size()){
-		cout << "\nOcorreu um ERRO!\n"; // O grafo possui um ciclo
-		exit(EXIT_FAILURE);
-	}
+	// while(!l.empty()) {
+	// 	// cout << l.front()->id_task << "\n";
+	// 	l.pop_front();
+	// }
 
 	return l;
 }
@@ -166,8 +130,15 @@ vector<Task*> ordTop(Dgraph *d_graph){
 /*
 	Dado um grafo disjuntivo, calcula o makespan e seu custo
 */
- makespan SimulatedAnnealing::calculaCusto(Dgraph *d_graph){
-	vector<Task*> ord = ordTop(d_graph); //Ordenação topológica;
+ makespan SimulatedAnnealing::calculaCusto(Dgraph *d_graph, list<Task*> *ordem) {
+	list<Task*> ord;
+	cout << "\n Passou! \n ";	
+	if(ordem == NULL){
+		ord = ordTop(d_graph, NULL);
+	}
+	else
+		ord = *(ordem);
+
 	vector<Task*> *graph = d_graph->getGraph();
 	int *dists = new int[d_graph->getTaskList().size()];
 	stack<Task*> nodes_cp; // Pilha de elementos do caminho crítico
@@ -177,31 +148,39 @@ vector<Task*> ordTop(Dgraph *d_graph){
 		dists[d_graph->getTaskList().at(i)->id_task] = INFNEG;
 	}
 
-	vector<Task*>::iterator v; 
+	list<Task*>::iterator v; 
 	for(v = ord.begin(); v != ord.end(); v++){
-		for(int i= 0; i<graph[(*v)->id_task].size(); i++){
+		for(int i= 0; i < graph[(*v)->id_task].size(); i++){
+
 			if(dists[graph[(*v)->id_task].at(i)->id_task] < (dists[(*v)->id_task] + graph[(*v)->id_task].at(i)->duration)){
 				dists[graph[(*v)->id_task].at(i)->id_task] = dists[(*v)->id_task] + graph[(*v)->id_task].at(i)->duration;
 				graph[(*v)->id_task].at(i)->pai = (*v); 
 			}
+
 		}
 	}
 
 	vector<Task*>::iterator t = d_graph->getTaskList().end();
-	t--;
+	// Task *t  = d_graph->getTaskList().at(d_graph.getTaskList().size());
+	Task *aux;
+	--t;
 	nodes_cp.push((*t));
-	while(*t != 0){
-		if((*t)->pai){
-			nodes_cp.push((*t)->pai);
-			(*t) = (*t)->pai;
-		}
-		else
-			(*t) = 0;
+	int i = 0;
+	while(t != d_graph->getTaskList().begin()){
+		i++;
+		cout << i << endl;
+		cout << "entrou \n";
+		nodes_cp.push((*t)->pai);
+		t = find(d_graph->getTaskList().begin(), t,(*t)->pai);
 	}
+
+
+
 	makespan R;
-	R.custo = dists[101];
-	R.nodos = nodes_cp;
+	R.custo = dists[101]; //Custo do critical path
+	R.nodos = nodes_cp; // Nós que compõe o critical path
 	R.dists = dists;
+	// makespan R
 
 	return R; //Estrutura que contém o custo e os nodos do caminho crítico;
 	
@@ -211,33 +190,48 @@ vector<Task*> ordTop(Dgraph *d_graph){
 	*/
 }
 
+
+
+bool sortByDuration(const Task *t1, const Task *t2) {
+	if(t1->duration < t2->duration ) {
+		return true;
+	}
+	return false;
+}
+
 /*
 	Regra shortest path time
 */
 void SimulatedAnnealing::solucaoInicial(Dgraph *d_graph){
+	cout << "Solução inicial \n";
 	int qtdMach = d_graph->getMach();
 	vector<Task*> *graph = d_graph->getGraph();
-	this->m = new vector<Task>[qtdMach];
-	vector<Task*> *m0 = new vector<Task*>[qtdMach];
+	this->m = new vector<Task*>[qtdMach];
+	vector<Task*> *m0 = new vector<Task*>[qtdMach]; // Vazamento!!!
 	
 	for(int i =0; i < qtdMach; i++){	
 		for(int j = 0; j < d_graph->getTaskList().size(); j++){
 			if(d_graph->getTaskList().at(j)->machine_id == i)
-				this->m[i].push_back((*d_graph->getTaskList().at(j)));
+				this->m[i].push_back(d_graph->getTaskList().at(j));
 		}
 	}
 
 	//Para cada máquina, executa SPT
 	for(int i = 0; i < qtdMach; i++){
-		sort(this->m[i].begin(), this->m[i].end()); // O(N*log n)
+		sort(this->m[i].begin(), this->m[i].end(), sortByDuration); // O(N*log n)
 	}
 
-	//Adiciona as arestas no grafo
+
+
+	// //Adiciona as arestas no grafo
 	for(int i =0; i < qtdMach; i++){
 		for(int j=0; j < this->m[i].size()-1; j++){
-			d_graph->addEdge(&(this->m[i][j]), &(this->m[i][j+1]));
+			d_graph->addEdge(this->m[i][j], this->m[i][j+1]);
 		}
 	}
+
+	delete [] m0;
+	delete [] m;
 }
 
 /*
@@ -247,43 +241,74 @@ Verifica se todas as operações entre i e j no caminho crítico, são da mesma 
 
 */
 
-bool checkMachine(vector<Task*> v, int i, int j, int idMachine){
+bool checkSucessiveMachine(vector<Task*> v, int i, int j, int idMachine){
 	vector<Task*>::iterator x = find(v.begin(), v.end(), v.at(i));
 	vector<Task*>::iterator y = find(v.begin(), v.end(), v.at(j));
-	vector<Task*>::iterator it;
+	vector<Task*>::iterator it = x;
 
-	for(it = x; it != y; it++){
-		if((*it)->machine_id != idMachine)
-			return false;
+	if( (*x)->machine_id == (*y)->machine_id ) {
+		if(y == (it++)) {
+			return true;
+		}		
 	}
-	return true;
+
+	return false;
+}
+
+/*
+	Inverte a ordem que i e j são processadas na mesma máquina
+*/
+void swapTask(Dgraph *dg, vector<Task*> *graph, int i, int j) {
+	// Adiciono as novas arestas revertendo a ordem
+	Task* pai_i = dg->getTaskList().at(i)->pai;
+	
+	dg->addEdge(pai_i, dg->getTaskList().at(j));
+	dg->addEdge(dg->getTaskList().at(i), graph[j].at(0));
+	dg->addEdge(dg->getTaskList().at(j), dg->getTaskList().at(i));
+
+	dg->delEdge(pai_i, dg->getTaskList().at(i));
+	dg->delEdge(dg->getTaskList().at(i), dg->getTaskList().at(j));
+	dg->delEdge(dg->getTaskList().at(j), graph[j].at(0));
 }
 
 /*
 	Gera uma solução vizinha à que foi passada na função.
+
+	**** EM CONSTRUÇÃO ****
 */
 void SimulatedAnnealing::solucaoVizinha(Dgraph *d_graph, makespan R){
 	vector<Task*> t = d_graph->getTaskList();
 	int custo = R.custo;
 	stack<Task*> nodo = R.nodos;
-	vector<Task*> v;
+	vector<Task*> v; // Critical path
 	int id_mach;
+	int qtdMach = d_graph->getMach();
+	vector<Task*> *graph = d_graph->getGraph();
+
+	vector<Task*> *m0 = new vector<Task*>[qtdMach]; // lista de maquinas e suas respectivas operações
 
 	while(!nodo.empty()){
 		v.push_back(nodo.top());
 		nodo.pop();
 	}
 
-	int x, y, aux;
+	int x = 0, y = 0, aux;
 	bool flag = false;
 	vector<Task*>::iterator it;
-	while(flag){
+	
+	srand(time(NULL));
+	while(flag == false) {
 		// Sorteia 2 tarefas 
 		x = rand() % v.size();
 		y = rand() % v.size();
 		
-		while(x == y)
+		cout << v.size() << "\n";
+		cout << x << "\n"; 
+		cout << y << "\n";
+
+		while(x == y){
 			y = rand() % v.size();
+		}
 
 		if(x > y){
 			aux = x;
@@ -292,55 +317,31 @@ void SimulatedAnnealing::solucaoVizinha(Dgraph *d_graph, makespan R){
 		}
 
 		if(v.at(x) && v.at(y)){ //Checa se estão no caminho crítico
-			if(v.at(x)->machine_id == v.at(y)->machine_id){ //Checa se são executadas na mesma máquina				
-				if(checkMachine(v, x, y, v.at(x)->machine_id)){ //Checa se todas as operaçoes entre x e y são executadas na mesma máquina;
-					//Case 1
-					it = find(t.begin(), t.end(), v.at(y));
-					it++;
-					if(find(v.begin(), v.end(), (*it)) != v.end()){
-						// if(){
-							
-						// 		Aqui é que tá o rolé!
-							
-						// }
-					}
-					// //Case 2
-					it = find(t.begin(), t.end(), v.at(x));
-					it--;
-					if(find(v.begin(), v.end(), (*it)) != v.end()){
-						it = find(t.begin(), t.end(), v.at(y));
-						it--;
-						if((R.dists[v.at(x)->id_task] + v.at(x)->duration) >= (R.dists[(*it)->id_task] + (*it)->duration)){
-							
-						}
-					}
-
-
-				}
-			}
+			if(checkSucessiveMachine(v, x, y, v.at(x)->machine_id)){ //Checa se todas as operaçoes entre x e y são executadas na mesma máquina;
+				swapTask(d_graph, graph, x, y);
+				flag = true;
+			}	
 		}
-
-
-
-
+	}
 		/*
-			Checa se as Task's estão no vetor;
-			Checa se são da mesma máquina;
-			Checa se todas as Task's entre x e y são da mesma máquina;
+			Pseudocódigo:
 
-		
-			Caso, as sentenças acima sejam verdadeiras, aí verificamos as sentenças abaixo;
-				
-				case 1:
-					Operação j+1 está no critical path;
-					maxpath(j, last) >= maxpath(i+1, last);
+				Checa se as Task's estão no vetor;
+				Checa se são da mesma máquina;
+				Checa se todas as Task's entre x e y são da mesma máquina;
 
-				case 2: 
-					Operaçao i-1 está no critical path;
-					maxPath(begin, i) + i->duration >= maxPath(begin, j-1) + (j-1)->duration;
+			
+				Caso, as sentenças acima sejam verdadeiras, aí verificamos as sentenças abaixo;
+					
+					case 1:
+						Operação j+1 está no critical path;
+						maxpath(j, last) >= maxpath(i+1, last);
+
+					case 2: 
+						Operaçao i-1 está no critical path;
+						maxPath(begin, i) + i->duration >= maxPath(begin, j-1) + (j-1)->duration;
 		*/
 
-	}
 
 
 }
@@ -361,7 +362,8 @@ void SimulatedAnnealing::mostraSolucao(){
 Destrutor
 */
 SimulatedAnnealing::~SimulatedAnnealing(){
-	delete []this->melhor;
+	delete []this->m;
+	
 	for(int i=0; i<this->tamanho; i++)
 			delete []this->custo;
 

@@ -4,7 +4,7 @@ typedef struct Task{
 	int machine_id;
 	int duration;
 	Task *pai;
-
+	bool visited = false;
 
 	Task(int i, int j, int m, int d) : id_task(i), job_id(j), machine_id(m), duration(d){
 		// pai = NULL;

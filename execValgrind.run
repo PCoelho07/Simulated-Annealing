@@ -1,0 +1,4 @@
+
+
+valgrind --leak-check=full --leak-resolution=high --error-limit=no ./sa_jsp ../../instances_JSP/abz5_1010.jsp --t0 6163 --nit 200 --txalpha 0.9999
+

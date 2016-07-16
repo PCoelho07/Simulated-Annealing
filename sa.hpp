@@ -12,7 +12,6 @@
 #include <cmath>
 #include <algorithm>
 #include <stack>
-// #include <iostream>
 #include "Dgraph.hpp"
 
 using namespace std;
@@ -27,21 +26,20 @@ struct makespan{
 class SimulatedAnnealing{
 	private:
 		float **custo; //Matriz de custo
-		int *melhor; //grafo de melhor caminho
-		int custoMelhor; // Custo do melhor caminho
+		makespan melhor; //grafo de melhor caminho
 		int tamanho; // tamanho do grafo
-		vector<Task> *m;
+		vector<Task*> *m;
 
 	public:
-		// --t0 1000 --nit 20 --txalpha 0.99 
-		SimulatedAnnealing(const char*, double, const char*, int, const char*, float);
-		SimulatedAnnealing();
+		// --t0 1000 --nit 20 --txalpha 0.99 Dgraph
+		SimulatedAnnealing(const char*, double, const char*, int, const char*, float,  Dgraph*);
+		// SimulatedAnnealing();
 		~SimulatedAnnealing();
 	private:
 		void lerArq(const char*);
 	public:
 		void solucaoInicial(Dgraph*);
 		void solucaoVizinha(Dgraph*, makespan);
-		makespan calculaCusto(Dgraph*);	
+		makespan calculaCusto(Dgraph*, list<Task*>*);	
 		void mostraSolucao();
 };
