@@ -2,10 +2,10 @@
 
 #./sa_jsp ../../instances_JSP/abz5_1010.jsp
 
-	echo "Compilando arquivo! "
-	make	
-
-	echo "Iniciando execução "
-	./sa_jsp ../../instances_JSP/abz5_1010.jsp --t0 6163 --nit 200 --txalpha 0.9999
+	echo "Compilando arquivo... "
+	make
+	
+	echo "Iniciando execução... "
+	./sa_jsp ../../instances_JSP/pc_55.jsp --t0 6163 --nit 200 --txalpha 0.9999
 	echo "Execucao  finalizada!"
 

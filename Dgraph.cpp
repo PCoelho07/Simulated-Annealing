@@ -45,18 +45,18 @@ void Dgraph::readFile(const char *file){
 	// /*
 	// 	Exibição(this->dados)
 	// */
-	// for(int i =0; i < this->jobs; i++){
-	// 	for(int j =0; j < this->mach*2; j++){
-	// 		cout << dados[i][j] << " ";
-	// 	}
-	// 	cout << endl;
-	// }
+	for(int i =0; i < this->jobs; i++){
+		for(int j =0; j < this->mach*2; j++){
+			cout << dados[i][j] << " ";
+		}
+		cout << endl;
+	}
 
 	if(vetor.size() != this->jobs*(this->mach*2))
 		cout << "Erro durante leitura!!\n";
 	
 	cout << "\nJobs: " << this->jobs << " Machines: " << this->mach;
-	cout << "\nMatrix size: " << this->jobs*(this->mach*2) << "\n";
+	// cout << "\nMatrix size: " << this->jobs*(this->mach*2) << "\n";
 
 	cout << "\n\n";
 
