@@ -10,7 +10,7 @@ SimulatedAnnealing::SimulatedAnnealing(const char* strT0, double t0, const char*
 	Dgraph *d_graph = d;
 	makespan corrente, vizinho;
 
-	this->solucaoInicial(d_graph);
+	// this->solucaoInicial(d_graph);
 	this->melhor = corrente = this->calculaCusto(d, NULL);
 	
 	// /* Variáveis auxilares */
@@ -61,11 +61,11 @@ void visits(Task *t, list<Task*> &l, vector<Task*> *adj) {
 	vector<Task*>::iterator i;
 
 	if(adj[t->id_task].size() > 0) {
-		cout << t->id_task << "\n";
-		cout << "\nPossui adjacentes!\n";
+		// cout << t->id_task << "\n";
+		// cout << "\nPossui adjacentes!\n";
 		for(i = adj[t->id_task].begin(); i != adj[t->id_task].end(); ++i) {
-			cout << "loop for \n";
-			cout << (*i)->visited << "\n";
+			// cout << "loop for \n";
+			// cout << (*i)->visited << "\n";
 			if((*i)->visited == false){
 				visits((*i), l, adj);
 			}
@@ -88,53 +88,43 @@ list<Task*> ordTop(Dgraph *d_graph, Task *v){
 	vector<Task*> vertex = d_graph->getTaskList();
 	vector<Task*> *graph = d_graph->getGraph();
 	vector<Task*> s; // Lista de vertices sem precedência.
-	list<Task*> l; // Lista ordenada topologicamente.
-
-	// if(v != NULL){
-	// 	s.push_back(v);
-	// }
-	// else{
-	// 	s.push_back(vertex.at(0));
-	// }
-
-	// for(int i = 0; i < vertex.size(); i++){
-	// 	cout << "Vertex: " << vertex.at(i)->id_task << " - ";
-	// 	if(graph[vertex.at(i)->id_task].size() > 0) {
-	// 		for(int j =0; j < graph[vertex.at(i)->id_task].size(); j++){
-	// 			cout << "Adjacents: " << graph[vertex.at(i)->id_task].at(j)->id_task << "\n";
-	// 		}			
-	// 	}
-	// 	else {
-	// 		cout << "Não há adjacentes!!!\n";
-	// 	}
-	// }
-	// for(int j =0; j < graph[vertex.at(1)->id_task].size(); j++){
-	// 			cout << "Adjacents: " << graph[vertex.at(1)->id_task].at(j)->id_task << "\n";
-	// }	
-	
+	list<Task*> l; // Lista ordenada topologicamente.	
 	
 	for(int i = 0; i < vertex.size(); i++) {
 		if(vertex.at(i)->visited  == false)	
 			visits(vertex.at(i), l, graph);
 	}
 
-	// while(!l.empty()) {
-	// 	// cout << l.front()->id_task << "\n";
-	// 	l.pop_front();
-	// }
-
 	return l;
+}
+
+void show_ord(list<Task*> l) {
+	list<Task*>::iterator it = l.begin(); 
+	while(l.size() > 0) {
+		cout << l.front()->id_task << "\n";
+		l.pop_front();
+	}
+}
+
+
+void stack_up(stack<Task*> &q, Task *f) {
+	if (f != NULL) {
+		 q.push(f);
+		 stack_up(q, f->pai);
+	}
 }
 
 
 /*
-	Dado um grafo disjuntivo, calcula o makespan e seu custo
+	Dado um grafo disjuntivo, calcula o makespan
 */
  makespan SimulatedAnnealing::calculaCusto(Dgraph *d_graph, list<Task*> *ordem) {
 	list<Task*> ord;
 	cout << "\n Passou! \n ";	
 	if(ordem == NULL){
 		ord = ordTop(d_graph, NULL);
+		cout << " -- Ordem topológica --\n";
+		show_ord(ord);
 	}
 	else
 		ord = *(ordem);
@@ -149,33 +139,53 @@ list<Task*> ordTop(Dgraph *d_graph, Task *v){
 	}
 
 	list<Task*>::iterator v; 
+	int aux = 0;
 	for(v = ord.begin(); v != ord.end(); v++){
-		for(int i= 0; i < graph[(*v)->id_task].size(); i++){
+		for(int i= 0; i < graph[(*v)->id_task].size(); ++i){
 
 			if(dists[graph[(*v)->id_task].at(i)->id_task] < (dists[(*v)->id_task] + graph[(*v)->id_task].at(i)->duration)){
+				aux++;
 				dists[graph[(*v)->id_task].at(i)->id_task] = dists[(*v)->id_task] + graph[(*v)->id_task].at(i)->duration;
-				graph[(*v)->id_task].at(i)->pai = (*v); 
+				// graph[(*v)->id_task].at(i)->pai = new Task((*v)->id_task, (*v)->job_id, (*v)->machine_id, (*v)->duration); 
+				graph[(*v)->id_task].at(i)->pai = (*v);
+
+				// cout << " Iterations: " << aux << " \n";
+				// cout << "Node: " << graph[(*v)->id_task].at(i)->id_task << " parents: " << graph[(*v)->id_task].at(i)->pai->id_task << "\n";
 			}
 
 		}
 	}
-
-	vector<Task*>::iterator t = d_graph->getTaskList().end();
-	// Task *t  = d_graph->getTaskList().at(d_graph.getTaskList().size());
-	Task *aux;
-	--t;
-	nodes_cp.push((*t));
-	int i = 0;
-	while(t != d_graph->getTaskList().begin()){
-		i++;
-		cout << i << endl;
-		cout << "entrou \n";
-		nodes_cp.push((*t)->pai);
-		t = find(d_graph->getTaskList().begin(), t,(*t)->pai);
+	cout << "-- Distancias -- \n";
+	// vector<Task*>::iterator it = d_graph->getTaskList().begin();
+	for(int i = 0; i < d_graph->getTaskList().size(); i++) {
+		// cout << (*it)->id_task << ":" << dists[(*it)->id_task] << "\n"; 
+		cout << d_graph->getTaskList().at(i)->id_task << ":" << dists[d_graph->getTaskList().at(i)->id_task] << "\n";
 	}
 
 
 
+	// Exibição
+	cout << " -- Exibição -- \n";
+	for(int i=0; i < d_graph->getTaskList().size(); ++i){
+		cout << "Node: " << d_graph->getTaskList().at(i)->id_task << "\n";
+		for(int j = 0; j < graph[i].size(); ++j){
+			cout << " parents: " << graph[i].at(j)->pai->id_task << "\n";
+		}
+	}
+
+	cout << "entrou \n";
+
+	// vector<Task*>::iterator t = d_graph->getTaskList().end();
+	// --t;
+	// cout << (*t)->id_task << "\n";
+	// cout << (*t)->pai->id_task << "\n";
+	// stack_up(nodes_cp, (*t));	
+	cout << "CP size: " << nodes_cp.size() <<  "\n";
+
+
+
+
+	exit(-1);
 	makespan R;
 	R.custo = dists[101]; //Custo do critical path
 	R.nodos = nodes_cp; // Nós que compõe o critical path
@@ -189,8 +199,6 @@ list<Task*> ordTop(Dgraph *d_graph, Task *v){
 		dists[t] = minpath(s, t), nesse caso, dists[t] = maxpath(s, t).
 	*/
 }
-
-
 
 bool sortByDuration(const Task *t1, const Task *t2) {
 	if(t1->duration < t2->duration ) {
@@ -227,6 +235,7 @@ void SimulatedAnnealing::solucaoInicial(Dgraph *d_graph){
 	for(int i =0; i < qtdMach; i++){
 		for(int j=0; j < this->m[i].size()-1; j++){
 			d_graph->addEdge(this->m[i][j], this->m[i][j+1]);
+			d_graph->addEdge(this->m[i][j+1], this->m[i][j]);
 		}
 	}
 
@@ -302,13 +311,15 @@ void SimulatedAnnealing::solucaoVizinha(Dgraph *d_graph, makespan R){
 		x = rand() % v.size();
 		y = rand() % v.size();
 		
-		cout << v.size() << "\n";
-		cout << x << "\n"; 
-		cout << y << "\n";
+		cout << "Tamanho caminho critico: " << v.size() << "\n";
 
 		while(x == y){
 			y = rand() % v.size();
 		}
+
+		cout << " -- Números sorteados -- \n";
+		cout << x << "\n"; 
+		cout << y << "\n";
 
 		if(x > y){
 			aux = x;

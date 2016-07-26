@@ -158,8 +158,8 @@ void Dgraph::setTaskList(vector<Task*> taskList){
 }
 
 Dgraph::~Dgraph() {
-	delete [] this->adj;
+	// delete [] this->adj;
 
-	for(int i=0; i<this->tamanho; i++)
-		delete []this->dados;
+	// for(int i=0; i<this->tamanho; i++)
+	// 	delete []this->dados;
 }

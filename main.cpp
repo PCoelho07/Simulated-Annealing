@@ -9,7 +9,7 @@ int main(int argc, char const *argv[]){
 		d_graph->readFile(argv[1]);	
 		d_graph->mountDG();
 
-		// SimulatedAnnealing *sa = new SimulatedAnnealing(argv[2], atof(argv[3]), argv[4], atoi(argv[5]), argv[6], atof(argv[7]), d_graph);
+		SimulatedAnnealing *sa = new SimulatedAnnealing(argv[2], atof(argv[3]), argv[4], atoi(argv[5]), argv[6], atof(argv[7]), d_graph);
 
 		delete d_graph;
 		// delete sa;
