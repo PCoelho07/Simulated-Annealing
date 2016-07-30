@@ -7,6 +7,9 @@ SimulatedAnnealing::SimulatedAnnealing(const char* strT0, double t0, const char*
 	double t = t0; // Temṕeratura corrente
 	double txReduc = talpha; // Taxa de redução da temperatura
 	
+	this->tl = d->getTaskList();
+
+
 	Dgraph *d_graph = d;
 	makespan corrente, vizinho;
 
@@ -107,13 +110,29 @@ void show_ord(list<Task*> l) {
 }
 
 
-void stack_up(stack<Task*> &q, Task *f) {
-	if (f != NULL) {
-		 q.push(f);
-		 stack_up(q, f->pai);
+stack<Task*> SimulatedAnnealing::stack_up(int *prev, int f) {
+	stack<Task*> q;
+	int aux = f;
+	Task *t;
+	
+	while(aux != 0) {
+		t = getById(aux);
+		q.push(t);
+		aux = prev[aux];
 	}
+
+	q.push(getById(aux));
+	return q;
 }
 
+Task *SimulatedAnnealing::getById(int id) {
+	vector<Task*>::iterator it = this->tl.begin();
+	
+	for(;it != this->tl.end(); it++) {
+		if( (*it)->id_task == id )
+			return (*it);
+	}	
+}
 
 /*
 	Dado um grafo disjuntivo, calcula o makespan
@@ -132,11 +151,21 @@ void stack_up(stack<Task*> &q, Task *f) {
 	vector<Task*> *graph = d_graph->getGraph();
 	int *dists = new int[d_graph->getTaskList().size()];
 	stack<Task*> nodes_cp; // Pilha de elementos do caminho crítico
+	int *prev = new int[d_graph->getTaskList().size()];
+	// vector<int> prev;
 
 	dists[d_graph->getTaskList().at(0)->id_task] = 0;
 	for(int i=1; i < d_graph->getTaskList().size(); i++){
 		dists[d_graph->getTaskList().at(i)->id_task] = INFNEG;
 	}
+
+	cout << "-- Distancias(antes da atualiação) -- \n";
+	// vector<Task*>::iterator it = d_graph->getTaskList().begin();
+	for(int i = 0; i < d_graph->getTaskList().size(); i++) {
+		// cout << (*it)->id_task << ":" << dists[(*it)->id_task] << "\n"; 
+		cout << d_graph->getTaskList().at(i)->id_task << ":" << dists[d_graph->getTaskList().at(i)->id_task] << "\n";
+	}
+
 
 	list<Task*>::iterator v; 
 	int aux = 0;
@@ -146,17 +175,15 @@ void stack_up(stack<Task*> &q, Task *f) {
 			if(dists[graph[(*v)->id_task].at(i)->id_task] < (dists[(*v)->id_task] + graph[(*v)->id_task].at(i)->duration)){
 				aux++;
 				dists[graph[(*v)->id_task].at(i)->id_task] = dists[(*v)->id_task] + graph[(*v)->id_task].at(i)->duration;
-				// graph[(*v)->id_task].at(i)->pai = new Task((*v)->id_task, (*v)->job_id, (*v)->machine_id, (*v)->duration); 
-				graph[(*v)->id_task].at(i)->pai = (*v);
+				prev[graph[(*v)->id_task].at(i)->id_task] = (*v)->id_task;
+				// prev[graph[(*v)->id_task].at(i)->id_task] = (*v);
 
-				// cout << " Iterations: " << aux << " \n";
 				// cout << "Node: " << graph[(*v)->id_task].at(i)->id_task << " parents: " << graph[(*v)->id_task].at(i)->pai->id_task << "\n";
 			}
 
 		}
 	}
 	cout << "-- Distancias -- \n";
-	// vector<Task*>::iterator it = d_graph->getTaskList().begin();
 	for(int i = 0; i < d_graph->getTaskList().size(); i++) {
 		// cout << (*it)->id_task << ":" << dists[(*it)->id_task] << "\n"; 
 		cout << d_graph->getTaskList().at(i)->id_task << ":" << dists[d_graph->getTaskList().at(i)->id_task] << "\n";
@@ -166,31 +193,26 @@ void stack_up(stack<Task*> &q, Task *f) {
 
 	// Exibição
 	cout << " -- Exibição -- \n";
-	for(int i=0; i < d_graph->getTaskList().size(); ++i){
-		cout << "Node: " << d_graph->getTaskList().at(i)->id_task << "\n";
-		for(int j = 0; j < graph[i].size(); ++j){
-			cout << " parents: " << graph[i].at(j)->pai->id_task << "\n";
-		}
+	for(int i =0; i < d_graph->getTaskList().size(); ++i) {
+		cout << "Node: " << d_graph->getTaskList().at(i)->id_task << "Prev: " << prev[d_graph->getTaskList().at(i)->id_task] << "\n";
 	}
 
 	cout << "entrou \n";
+	cout << " \n Número de ocorrências: " << aux << "\n";	
+	vector<Task*>::iterator it = this->tl.begin();
+	
+	// cout << "Last element: " << d_graph->getTaskList().back()->id_task << "\n";
+	nodes_cp = stack_up(prev, d_graph->getTaskList().back()->id_task);
 
-	// vector<Task*>::iterator t = d_graph->getTaskList().end();
-	// --t;
-	// cout << (*t)->id_task << "\n";
-	// cout << (*t)->pai->id_task << "\n";
-	// stack_up(nodes_cp, (*t));	
 	cout << "CP size: " << nodes_cp.size() <<  "\n";
 
-
-
-
-	exit(-1);
 	makespan R;
-	R.custo = dists[101]; //Custo do critical path
+	R.custo = dists[d_graph->getTaskList().back()->id_task]; //Custo do critical path
 	R.nodos = nodes_cp; // Nós que compõe o critical path
 	R.dists = dists;
 	// makespan R
+
+	// exit(-1);
 
 	return R; //Estrutura que contém o custo e os nodos do caminho crítico;
 	
@@ -311,7 +333,7 @@ void SimulatedAnnealing::solucaoVizinha(Dgraph *d_graph, makespan R){
 		x = rand() % v.size();
 		y = rand() % v.size();
 		
-		cout << "Tamanho caminho critico: " << v.size() << "\n";
+		// cout << "Tamanho caminho critico: " << v.size() << "\n";
 
 		while(x == y){
 			y = rand() % v.size();
@@ -329,6 +351,7 @@ void SimulatedAnnealing::solucaoVizinha(Dgraph *d_graph, makespan R){
 
 		if(v.at(x) && v.at(y)){ //Checa se estão no caminho crítico
 			if(checkSucessiveMachine(v, x, y, v.at(x)->machine_id)){ //Checa se todas as operaçoes entre x e y são executadas na mesma máquina;
+				cout << "ENTROU NA BAGAÇA!!!!! \n";
 				swapTask(d_graph, graph, x, y);
 				flag = true;
 			}	

@@ -29,6 +29,7 @@ class SimulatedAnnealing{
 		makespan melhor; //grafo de melhor caminho
 		int tamanho; // tamanho do grafo
 		vector<Task*> *m;
+		vector<Task*> tl;
 
 	public:
 		// --t0 1000 --nit 20 --txalpha 0.99 Dgraph
@@ -42,4 +43,6 @@ class SimulatedAnnealing{
 		void solucaoVizinha(Dgraph*, makespan);
 		makespan calculaCusto(Dgraph*, list<Task*>*);	
 		void mostraSolucao();
+		Task* getById(int);
+		stack<Task*> stack_up(int*, int);
 };
