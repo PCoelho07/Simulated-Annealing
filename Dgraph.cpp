@@ -143,6 +143,15 @@ bool Dgraph::addEdge(Task *v1, Task *v2){
 	return false;
 }
 
+bool Dgraph::isEdge(Task *v1, Task *v2) {
+	if(find(this->adj[v1->id_task].begin(), this->adj[v1->id_task].end(), v2) != this->adj[v1->id_task].end()) {
+		return true;
+	}
+
+	return false;
+}
+
+
 /*
 	Remove a aresta entre v1 e v2
 */

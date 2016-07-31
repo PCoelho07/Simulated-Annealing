@@ -35,6 +35,7 @@ class Dgraph{
 		void delEdge(Task *v1, Task *v2); //Remove uma aresta no grafo
 		int getJobs(){return this->jobs;};
 		int getMach(){return this->mach;};
+		bool isEdge(Task *v1, Task *v2);
 };
 
 

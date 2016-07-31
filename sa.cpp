@@ -151,7 +151,7 @@ Task *SimulatedAnnealing::getById(int id) {
 	vector<Task*> *graph = d_graph->getGraph();
 	int *dists = new int[d_graph->getTaskList().size()];
 	stack<Task*> nodes_cp; // Pilha de elementos do caminho crítico
-	int *prev = new int[d_graph->getTaskList().size()];
+	this->prev = new int[d_graph->getTaskList().size()];
 	// vector<int> prev;
 
 	dists[d_graph->getTaskList().at(0)->id_task] = 0;
@@ -175,7 +175,7 @@ Task *SimulatedAnnealing::getById(int id) {
 			if(dists[graph[(*v)->id_task].at(i)->id_task] < (dists[(*v)->id_task] + graph[(*v)->id_task].at(i)->duration)){
 				aux++;
 				dists[graph[(*v)->id_task].at(i)->id_task] = dists[(*v)->id_task] + graph[(*v)->id_task].at(i)->duration;
-				prev[graph[(*v)->id_task].at(i)->id_task] = (*v)->id_task;
+				this->prev[graph[(*v)->id_task].at(i)->id_task] = (*v)->id_task;
 				// prev[graph[(*v)->id_task].at(i)->id_task] = (*v);
 
 				// cout << "Node: " << graph[(*v)->id_task].at(i)->id_task << " parents: " << graph[(*v)->id_task].at(i)->pai->id_task << "\n";
@@ -194,7 +194,7 @@ Task *SimulatedAnnealing::getById(int id) {
 	// Exibição
 	cout << " -- Exibição -- \n";
 	for(int i =0; i < d_graph->getTaskList().size(); ++i) {
-		cout << "Node: " << d_graph->getTaskList().at(i)->id_task << "Prev: " << prev[d_graph->getTaskList().at(i)->id_task] << "\n";
+		cout << "Node: " << d_graph->getTaskList().at(i)->id_task << "Prev: " << this->prev[d_graph->getTaskList().at(i)->id_task] << "\n";
 	}
 
 	cout << "entrou \n";
@@ -202,7 +202,7 @@ Task *SimulatedAnnealing::getById(int id) {
 	vector<Task*>::iterator it = this->tl.begin();
 	
 	// cout << "Last element: " << d_graph->getTaskList().back()->id_task << "\n";
-	nodes_cp = stack_up(prev, d_graph->getTaskList().back()->id_task);
+	nodes_cp = stack_up(this->prev, d_graph->getTaskList().back()->id_task);
 
 	cout << "CP size: " << nodes_cp.size() <<  "\n";
 
@@ -257,7 +257,7 @@ void SimulatedAnnealing::solucaoInicial(Dgraph *d_graph){
 	for(int i =0; i < qtdMach; i++){
 		for(int j=0; j < this->m[i].size()-1; j++){
 			d_graph->addEdge(this->m[i][j], this->m[i][j+1]);
-			d_graph->addEdge(this->m[i][j+1], this->m[i][j]);
+			// d_graph->addEdge(this->m[i][j+1], this->m[i][j]);
 		}
 	}
 
@@ -267,20 +267,19 @@ void SimulatedAnnealing::solucaoInicial(Dgraph *d_graph){
 
 /*
 	
-Verifica se todas as operações entre i e j no caminho crítico, são da mesma máquina (Def de par crítico)
-	Supondo que i e j são da mesma máquina
+Verifica se i e j são operações sucessivas em alguma máquina k
 
 */
 
-bool checkSucessiveMachine(vector<Task*> v, int i, int j, int idMachine){
-	vector<Task*>::iterator x = find(v.begin(), v.end(), v.at(i));
-	vector<Task*>::iterator y = find(v.begin(), v.end(), v.at(j));
-	vector<Task*>::iterator it = x;
+bool SimulatedAnnealing::checkSucessiveMachine(Dgraph *dg, int i, int j, int idMachine){
+	
+	Task *v1 = this->getById(i);
+	Task *v2 = this->getById(j);
 
-	if( (*x)->machine_id == (*y)->machine_id ) {
-		if(y == (it++)) {
+	if( (v1->machine_id == idMachine) && (v2->machine_id == idMachine) ) {
+		if(dg->isEdge(v1, v2)) {
 			return true;
-		}		
+		}
 	}
 
 	return false;
@@ -289,9 +288,9 @@ bool checkSucessiveMachine(vector<Task*> v, int i, int j, int idMachine){
 /*
 	Inverte a ordem que i e j são processadas na mesma máquina
 */
-void swapTask(Dgraph *dg, vector<Task*> *graph, int i, int j) {
+void SimulatedAnnealing::swapTask(Dgraph *dg, vector<Task*> *graph, int i, int j) {
 	// Adiciono as novas arestas revertendo a ordem
-	Task* pai_i = dg->getTaskList().at(i)->pai;
+	Task* pai_i = this->getById(dg->getTaskList().at(i)->id_task);
 	
 	dg->addEdge(pai_i, dg->getTaskList().at(j));
 	dg->addEdge(dg->getTaskList().at(i), graph[j].at(0));
@@ -301,6 +300,17 @@ void swapTask(Dgraph *dg, vector<Task*> *graph, int i, int j) {
 	dg->delEdge(dg->getTaskList().at(i), dg->getTaskList().at(j));
 	dg->delEdge(dg->getTaskList().at(j), graph[j].at(0));
 }
+
+
+bool SimulatedAnnealing::isInPath(int n, vector<Task*> v) {
+	for(int i = 0; i < v.size(); i++) {
+		if(n == v.at(i)->id_task)
+			return true;
+	}
+
+	return false;
+}
+
 
 /*
 	Gera uma solução vizinha à que foi passada na função.
@@ -325,13 +335,15 @@ void SimulatedAnnealing::solucaoVizinha(Dgraph *d_graph, makespan R){
 
 	int x = 0, y = 0, aux;
 	bool flag = false;
-	vector<Task*>::iterator it;
+	vector<Task*>::iterator it_x, it_y;
 	
 	srand(time(NULL));
 	while(flag == false) {
 		// Sorteia 2 tarefas 
-		x = rand() % v.size();
-		y = rand() % v.size();
+		// x = rand() % v.back()->id_task;
+		// y = rand() % v.back()->id_task;
+		x = 19;
+		y = 18;
 		
 		// cout << "Tamanho caminho critico: " << v.size() << "\n";
 
@@ -339,9 +351,6 @@ void SimulatedAnnealing::solucaoVizinha(Dgraph *d_graph, makespan R){
 			y = rand() % v.size();
 		}
 
-		cout << " -- Números sorteados -- \n";
-		cout << x << "\n"; 
-		cout << y << "\n";
 
 		if(x > y){
 			aux = x;
@@ -349,11 +358,17 @@ void SimulatedAnnealing::solucaoVizinha(Dgraph *d_graph, makespan R){
 			y = aux;
 		}
 
-		if(v.at(x) && v.at(y)){ //Checa se estão no caminho crítico
-			if(checkSucessiveMachine(v, x, y, v.at(x)->machine_id)){ //Checa se todas as operaçoes entre x e y são executadas na mesma máquina;
+		cout << " -- Números sorteados -- \n";
+		cout << x << "\n"; 
+		cout << y << "\n";
+
+		if( (this->isInPath(x, v)) && (this->isInPath(y, v)) ) { //Checa se estão no caminho crítico
+			cout << "Passou no primero condicional!!! o/ \n";
+			if(checkSucessiveMachine(d_graph, x, y, v.at(x)->machine_id)){ //Checa se todas as operaçoes entre x e y são executadas na mesma máquina;
 				cout << "ENTROU NA BAGAÇA!!!!! \n";
 				swapTask(d_graph, graph, x, y);
 				flag = true;
+
 			}	
 		}
 	}

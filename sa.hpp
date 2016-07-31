@@ -30,6 +30,7 @@ class SimulatedAnnealing{
 		int tamanho; // tamanho do grafo
 		vector<Task*> *m;
 		vector<Task*> tl;
+		int *prev;
 
 	public:
 		// --t0 1000 --nit 20 --txalpha 0.99 Dgraph
@@ -45,4 +46,7 @@ class SimulatedAnnealing{
 		void mostraSolucao();
 		Task* getById(int);
 		stack<Task*> stack_up(int*, int);
+		bool isInPath(int, vector<Task*>);
+		void swapTask(Dgraph*, vector<Task*>*, int, int);
+		bool checkSucessiveMachine(Dgraph*, int, int, int);
 };
