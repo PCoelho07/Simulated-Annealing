@@ -47,6 +47,6 @@ class SimulatedAnnealing{
 		Task* getById(int);
 		stack<Task*> stack_up(int*, int);
 		bool isInPath(int, vector<Task*>);
-		void swapTask(Dgraph*, vector<Task*>*, int, int);
+		void swapTask(Dgraph*, vector<Task*>, vector<Task*>*, int, int);
 		bool checkSucessiveMachine(Dgraph*, int, int, int);
 };

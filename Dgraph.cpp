@@ -157,8 +157,12 @@ bool Dgraph::isEdge(Task *v1, Task *v2) {
 */
 void Dgraph::delEdge(Task *v1, Task *v2){
 	if(this->adj != NULL) {
-		vector<Task*>::iterator it = find(this->adj[v1->id_task].begin(), this->adj[v2->id_task].end(), v2);
-		this->adj[v1->id_task].erase(it);
+		vector<Task*>::iterator it = find(this->adj[v1->id_task].begin(), this->adj[v1->id_task].end(), v2);
+		
+		if(it != this->adj[v1->id_task].end())
+			this->adj[v1->id_task].erase(it);
+		else
+			cout << "it == end!!!\n\n";
 	}
 }
 
